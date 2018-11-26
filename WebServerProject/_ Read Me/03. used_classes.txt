@@ -1,0 +1,48 @@
+﻿
+HttpListener (System.Net)
+
+Слушатель http протокола.
+Чтоб начать прослушивание необходимо создать объект класса и добавить в коллекцию
+Prefixes строку, описывающую какой url необходимо прослушивать.
+
+https://msdn.microsoft.com/ru-ru/library/system.net.httplistener(v=vs.100).aspx
+
+---------------------------------------------------------------------------------------
+
+HttpListenerContext (System.Net)
+
+Описывает конкретный поступивший запрос и ответ на него. Получить объект можно 
+с помощью метода GetContext() класса HttpListener. Метод GetContext() отработает
+в тот момент, когда к серверу прийдет запрос.
+
+https://msdn.microsoft.com/ru-ru/library/system.net.httplistenercontext(v=vs.110).aspx
+
+---------------------------------------------------------------------------------------
+
+HttpListenerRequest (System.Net)
+
+Содержит информацию о входящем запросе.
+Получить объект можно с помощью свойства Request класса HttpListenerContext.
+
+https://msdn.microsoft.com/ru-ru/library/system.net.httplistenerrequest(v=vs.110).aspx
+
+---------------------------------------------------------------------------------------
+
+HttpListenerResponse (System.Net)
+
+Описывает ответ на запрос. 
+Получить объект можно с помощью свойства Response класса HttpListenerContext.
+После записи всех данных для ответа необходимо закрыть OutputStream (свойство класса
+HttpListenerResponse).
+
+https://msdn.microsoft.com/ru-ru/library/system.net.httplistenerresponse(v=vs.110).aspx
+
+---------------------------------------------------------------------------------------
+
+HttpUtility (System.Web)
+
+Содержит методы для кодирования и декодирования URL-адресов при обработке веб-запросов.
+
+https://msdn.microsoft.com/ru-ru/library/system.web.httputility(v=vs.110).aspx
+
+---------------------------------------------------------------------------------------
