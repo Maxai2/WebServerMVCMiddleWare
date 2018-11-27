@@ -37,12 +37,8 @@ namespace WebServerProject.Server
 
         private async Task Last(HttpListenerContext context, Dictionary<string, object> data)
         {
-            context.Response.StatusCode = 200;
-            context.Response.ContentType = "text/plain";
-            using (StreamWriter writer = new StreamWriter(context.Response.OutputStream))
-            {
-                writer.Write("Hello from MyWebServer!");
-            }
+            context.Response.StatusCode = 404;
+            context.Response.Close();
         }
     }
 }

@@ -1,105 +1,109 @@
-﻿using System;
+﻿using Autofac;
+using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
-using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
-using System.Web;
 
 namespace WebServerProject.Server
 {
-    public class MVCMiddleWare : IMiddleware
+    public class MvcMiddleware : IMiddleware
     {
-        private readonly HttpDelegate next;
+        private HttpDelegate next;
 
-        public MVCMiddleWare(HttpDelegate next)
+        public MvcMiddleware(HttpDelegate next)
         {
             this.next = next;
         }
 
         public async Task InvokeAsync(HttpListenerContext context, Dictionary<string, object> data)
         {
-            var responce = context.Response;
-            var writer = new StreamWriter(responce.OutputStream);
-
-            var result = Execute(context.Request);
-
-            if (result != null)
+            HttpListenerResponse response = context.Response;
+            StreamWriter writer = new StreamWriter(response.OutputStream);
+            try
             {
-                responce.ContentType = "text/html";
-                responce.StatusCode = 200;
-                await writer.WriteAsync(result);
-                writer.Close();
+                string resp = FindControllerAction(context.Request);
+                if (resp != null)
+                {
+                    response.StatusCode = 200;
+                    response.ContentType = "text/html";
+                    writer.Write(resp);
+                }
+                else
+                {
+                    await next.Invoke(context, data);
+                }
             }
-            else
-                await next.Invoke(context, data);
+            catch (Exception ex)
+            {
+                response.StatusCode = 500;
+                response.ContentType = "text/plain";
+                writer.Write(ex.Message);
+            }
+            finally
+            {
+                writer.Close();
+            }            
         }
 
-        private string Execute(HttpListenerRequest request)
+        private string FindControllerAction(HttpListenerRequest request)
         {
-            var urlParts = request.Url.PathAndQuery.Split(new[] { '/', '\\', '?' }, StringSplitOptions.RemoveEmptyEntries);
+            string[] urlparts = request.Url.PathAndQuery.Split(new char[] { '/', '\\', '?' }, StringSplitOptions.RemoveEmptyEntries);
+            if (urlparts.Length < 2) return null;
 
-            if (urlParts.Length < 2)
-                return null;
+            string controller = urlparts[0];
+            string action = urlparts[1];
 
-            var controller = urlParts[0];
-            var action = urlParts[1];
-            
+            Assembly curAssembly = Assembly.GetExecutingAssembly();
 
-            var ctrlName = $"WebServerProject.Controllers.{controller}Controller";
-            var asm = Assembly.GetExecutingAssembly();
-            var controllerType = asm.GetType(ctrlName, false, true); // last Capitalize
+            Type controllerType = curAssembly.GetType($"WebServerProject.Controllers.{controller}Controller", false, true);
+            if (controllerType == null) return null;
 
-            if (controllerType is null)
-                return null;
+            MethodInfo actionMethod = controllerType.GetMethod(action, BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase);
+            if (actionMethod == null) return null;
 
-            var actionMethod = controllerType.GetMethod(action, BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase);
+            List<object> paramsToMethod = new List<object>();
+            NameValueCollection coll = null;
 
-            if (actionMethod is null)
-                return null;
-
-            var controllerInstance = Activator.CreateInstance(controllerType); // new PhonesController
-
-            var args = new List<object>();
-            NameValueCollection queryParams = null;
-
-            if (request.HttpMethod == HttpMethod.Get.Method) // url
+            if (request.HttpMethod == "GET")
             {
-                if (urlParts.Length == 2 && actionMethod.GetParameters().Length != 0)
+                if (urlparts.Length == 2 && actionMethod.GetParameters().Length != 0) return null;
+                if (urlparts.Length > 2)
                 {
-                    return null;
-                }
-
-                if (urlParts.Length > 2)
-                {
-                    queryParams = HttpUtility.ParseQueryString(urlParts[2]);
+                    coll = System.Web.HttpUtility.ParseQueryString(urlparts[2]);
                 }
             }
-            else if (request.HttpMethod == HttpMethod.Post.Method) // form
+            else if (request.HttpMethod == "POST")
             {
-                using (StreamReader sr = new StreamReader(request.InputStream))
+                string body;
+                using (StreamReader reader = new StreamReader(request.InputStream))
                 {
-                    var data = sr.ReadToEnd();
-                    queryParams = HttpUtility.ParseQueryString(data);
+                    body = reader.ReadToEnd();
                 }
+                coll = System.Web.HttpUtility.ParseQueryString(body);
             }
+            else { return null; }
 
-            var parameters = actionMethod.GetParameters();
-
-            foreach (var param in parameters)
+            ParameterInfo[] parameters = actionMethod.GetParameters();
+            foreach (ParameterInfo pi in parameters)
             {
-                var item = queryParams[param.Name];
-                var arg = Convert.ChangeType(item, param.ParameterType);
-                args.Add(arg);
+                paramsToMethod.Add(Convert.ChangeType(coll[pi.Name], pi.ParameterType));
             }
+            if (paramsToMethod.Count != actionMethod.GetParameters().Length) return null;
 
-            var r = (string)actionMethod.Invoke(controllerInstance, args.ToArray());
+            //var _this = Activator.CreateInstance(controllerType);
+            //var args = paramsToMethod.ToArray();
+            //var res = actionMethod.Invoke(_this, args);
 
-            return r;
+            //string resp = (string)actionMethod.Invoke(Activator.CreateInstance(controllerType), paramsToMethod.ToArray());
+
+            var _this = MyWebServer.IOC.Resolve(controllerType);
+            var args = paramsToMethod.ToArray();
+            var res = actionMethod.Invoke(_this, args);
+
+            return res as string;
         }
     }
 }

@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Autofac;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
-using WebServerProject.Model;
 
 namespace WebServerProject.Server
 {
@@ -16,6 +16,8 @@ namespace WebServerProject.Server
 
         private HttpDelegate firstMiddleware;
 
+        public static IContainer IOC { get; private set; }
+
         public MyWebServer(string domain, string port)
         {
             this.domain = domain;
@@ -27,9 +29,15 @@ namespace WebServerProject.Server
         public MyWebServer Configure<T>() where T : IConfigurator, new()
         {
             IConfigurator configurator = new T();
-            MiddlewareBuilder builder = new MiddlewareBuilder();
+
+            var builder = new MiddlewareBuilder();
             configurator.ConfigureMiddleware(builder);
             firstMiddleware = builder.Build();
+
+            var depBuilder = new ContainerBuilder();
+            configurator.ConfigureDependencies(depBuilder);
+            IOC = depBuilder.Build();
+
             return this;
         }
 

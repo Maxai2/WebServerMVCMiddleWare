@@ -2,7 +2,7 @@
 
 namespace WebServerProject.Model
 {
-    public class BookService
+    public class BookService : IBookService
     {
         static private List<string> books;
 

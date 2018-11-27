@@ -32,6 +32,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Autofac, Version=4.8.1.0, Culture=neutral, PublicKeyToken=17863af14b0044da, processorArchitecture=MSIL">
+      <HintPath>..\packages\Autofac.4.8.1\lib\net45\Autofac.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Web" />
@@ -43,8 +46,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controllers\BookController.cs" />
+    <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\PhoneController.cs" />
     <Compile Include="Model\BookService.cs" />
+    <Compile Include="Model\FakeEmailService.cs" />
+    <Compile Include="Model\IBookService.cs" />
+    <Compile Include="Model\IEmailservice.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server\IConfigurator.cs" />
@@ -53,15 +61,19 @@
     <Compile Include="Server\MVCMiddleWare.cs" />
     <Compile Include="Server\MyMiddleware.cs" />
     <Compile Include="Server\MyWebServer.cs" />
+    <Compile Include="Server\StaticFilesMiddleware.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="wwwroot\page1.html" />
     <Content Include="_ Read Me\01. http_protocol.txt" />
     <Content Include="_ Read Me\03. used_classes.txt" />
     <Content Include="_ Read Me\02. web_server.txt" />
     <Content Include="_ Read Me\04. middleware.txt" />
+    <Content Include="_ Read Me\05. mvc.txt" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
