@@ -23,7 +23,7 @@ namespace WebServerProject.Server
 
         public void ConfigureMiddleware(MiddlewareBuilder builder)
         {
-            builder.Use<Middleware1>().Use<StaticFilesMiddleware>().Use<MvcMiddleware>();
+            builder.Use<StaticFilesMiddleware>().Use<AuthorizeMiddleWare>().Use<MvcMiddleware>();
         }
     }
 }

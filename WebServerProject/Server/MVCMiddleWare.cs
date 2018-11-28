@@ -3,9 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
+using WebServerProject.Server.Attributes;
 
 namespace WebServerProject.Server
 {
@@ -24,7 +26,7 @@ namespace WebServerProject.Server
             StreamWriter writer = new StreamWriter(response.OutputStream);
             try
             {
-                string resp = FindControllerAction(context.Request);
+                string resp = FindControllerAction(context.Request, data);
                 if (resp != null)
                 {
                     response.StatusCode = 200;
@@ -48,7 +50,7 @@ namespace WebServerProject.Server
             }            
         }
 
-        private string FindControllerAction(HttpListenerRequest request)
+        private string FindControllerAction(HttpListenerRequest request, Dictionary<string, object> data)
         {
             string[] urlparts = request.Url.PathAndQuery.Split(new char[] { '/', '\\', '?' }, StringSplitOptions.RemoveEmptyEntries);
             if (urlparts.Length < 2) return null;
@@ -61,8 +63,41 @@ namespace WebServerProject.Server
             Type controllerType = curAssembly.GetType($"WebServerProject.Controllers.{controller}Controller", false, true);
             if (controllerType == null) return null;
 
+            //var httpMethod = request.HttpMethod;
+            //MethodInfo actionMethod = controllerType.GetMethod($"{httpMethod}{action}", BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase);
+
             MethodInfo actionMethod = controllerType.GetMethod(action, BindingFlags.Instance | BindingFlags.Public | BindingFlags.IgnoreCase);
             if (actionMethod == null) return null;
+
+            var attr = actionMethod.GetCustomAttribute<HttpMethodAttribute>();
+
+            if (attr != null)
+            {
+                if (String.Compare(attr.Method, request.HttpMethod, true) != 0)
+                {
+                    Console.WriteLine($"{attr.Method} - {request.HttpMethod}");
+                    return null;
+                }
+            }
+
+            var attrAuth = actionMethod.GetCustomAttribute<AuthorizeAttribute>();
+
+            if (attrAuth != null)
+            {
+                if ((bool)data["isAuth"] == false)
+                {
+                    return "HTTP ERROR 401: Not authorizade";
+                }
+
+                if (attrAuth.Roles != null)
+                {
+                    var roles = attrAuth.Roles.Split(',');
+                    if (!roles.Contains(data["Role"]))
+                    {
+                        return "HTTP ERROR 401: Access Denied!";
+                    }
+                }
+            }
 
             List<object> paramsToMethod = new List<object>();
             NameValueCollection coll = null;

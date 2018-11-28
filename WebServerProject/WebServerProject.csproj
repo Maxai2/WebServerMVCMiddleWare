@@ -55,6 +55,9 @@
     <Compile Include="Model\IEmailservice.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Server\Attributes\AuthorizeAttribute.cs" />
+    <Compile Include="Server\Attributes\HttpMethodAttribute.cs" />
+    <Compile Include="Server\AuthorizeMiddleWare.cs" />
     <Compile Include="Server\IConfigurator.cs" />
     <Compile Include="Server\IMiddleware.cs" />
     <Compile Include="Server\MiddlewareBuilder.cs" />

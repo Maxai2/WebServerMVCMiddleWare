@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WebServerProject.Model;
+using WebServerProject.Server.Attributes;
 
 namespace WebServerProject.Controllers
 {
@@ -16,6 +17,8 @@ namespace WebServerProject.Controllers
             this.bookService = bookService;
         }
 
+        [Authorize("User,Admin")] // [Authorize]
+        [HttpMethod("GET")]
         public string All()
         {
             List<string> books = bookService.GetAllBooks();
@@ -37,7 +40,10 @@ namespace WebServerProject.Controllers
             return resp.ToString();
         }
 
+        [Authorize("Admin")]
+        [HttpMethod("POST")]
         public string Add(string title)
+        //public string PostAdd(string title)
         {
             bookService.AddBook(title);
             List<string> books = bookService.GetAllBooks();
